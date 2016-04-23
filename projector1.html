@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<title>
+  スプライトのデモ
+</title>
+<meta charset="UTF-8">
+<script src="js/jquery-1.7.1.min.js"></script>
+<style type="text/css">
+#draw-target {
+    width:480px;
+    height:320px;
+    background-color: #ccf;
+    position:relative;
+}
+</style>
+<script type="text/javascript">
+var DHTMLSprite = function(params) {
+    var width = params.width;
+    var height = params.height;
+    var imagesWidth = params.imagesWidth;
+    var $element = params.$drawTarget.append('<div/>').find(':last');
+    var canvasHeight = params.$drawTarget.height();
+    $element.css({
+        position: 'absolute',
+        width: width,
+        height: height,
+        backgroundImage: 'url(' + params.images + ')'
+    });
+    var elemStyle = $element[0].style;
+
+    // 高速化のためMath.floorのローカル参照を持つ
+    var mathFloor = Math.floor;
+
+    var that = {
+        draw: function(x, y) {
+            //y座標が下を正としている
+            //elemStyle.left = x + 'px';
+            //elemStyle.top = y + 'px';
+
+            //y座標が上を正に変更、スプライトの高さを考慮してy座標を0に調整
+            elemStyle.left = x + 'px';
+            elemStyle.top = (canvasHeight - height - y) + 'px';
+
+        },
+
+        changeImage: function(index) {
+            index *= width;
+            var vOffset = -mathFloor(index / imagesWidth) * height;
+            var hOffset = -index % imagesWidth;
+            elemStyle.backgroundPosition = hOffset + 'px ' + vOffset + 'px';
+        },
+
+        show: function() {
+            elemStyle.display = 'block';
+        },
+
+        hide: function() {
+            elemStyle.display = 'none';
+        },
+
+        destroy: function() {
+            $element.remove();
+        }
+    };
+    // DHTMLSpriteのインスタンスを返す
+    return that;
+};
+
+
+
+$(document).ready(function() {
+
+  $('#launch_btn').click(function(){
+    var params = {
+        images: 'cogs.png',
+        imagesWidth: 256,
+        width: 64,
+        height: 64,
+        $drawTarget: $('#draw-target')
+    };
+    var sprite1 = DHTMLSprite(params);
+    sprite1.draw(0, 0);
+
+    var $stopwatch = $('#stopwatch');
+
+    var  interval = 30;  // 30ミリ秒毎に読み込み→1秒間に約33回読み込み
+　　 // 1px = 1m で計算している
+    var v0 = Number($('#initial-velocity').val());　// 入力値〔m/s〕
+    var degree = Number($('#angle').val());
+    var theta = degree / 360.0 * 2 * Math.PI; // deg.→the.
+    var g = 9.8;
+    var t = 0;
+　　var timer = setInterval(function(){
+      x = v0 * Math.cos(theta) * t;
+      y = v0 * Math.sin(theta) * t - 0.5 * g * t * t;
+      sprite1.draw(x, y);
+        t = t + (interval / 1000);
+        // console.log('x : ' + x +  ', y : ' + y);
+        $stopwatch.html(t.toFixed(1));
+
+        if(y < 0.0){
+          // 終了判定
+          clearInterval(timer);
+        }
+      }, interval);
+  });
+
+});
+</script>
+</head>
+<body>
+  <div id="draw-target">
+  </div>
+  <lable for = "initial-velocity">初速度</label>
+  <input type = "number" name = "initial-velocity" id = "initial-velocity" value = "50.0" step = "0.1" min = "0.0" max = "100.0">〔m/s〕
+
+  <lable for = "angle">角度</label>
+  <input type = "number" name = "angle" id = "angle" value = "45.0" step = "0.1" min = "0.0" max = "90.0">〔°〕
+
+  <input type = "button" name = "launch" id = "launch_btn" value = "発射">
+  <label for = "launch" id = "stopwatch">0.0</label>〔s〕
+
+</body>
+</body>
+</html>
